@@ -1,0 +1,40 @@
+{
+  "name": "blender-webgl-hot-reload-experiment",
+  "version": "0.0.1",
+  "description": "An experiment in hot reloading OBJ models from Blender",
+  "main": "watch-blender-file.js",
+  "scripts": {
+    "test": "standard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chinedufn/blender-webgl-hot-reload-experiment.git"
+  },
+  "keywords": [
+    "blender",
+    "webgl",
+    "hot",
+    "reload",
+    "live",
+    "wavefront",
+    "obj"
+  ],
+  "author": "Chinedu Francis Nwafili <frankie.nwafili@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chinedufn/blender-webgl-hot-reload-experiment/issues"
+  },
+  "homepage": "https://github.com/chinedufn/blender-webgl-hot-reload-experiment#readme",
+  "devDependencies": {
+    "standard": "^10.0.3"
+  },
+  "dependencies": {
+    "chokidar": "^1.7.0",
+    "cuid": "^1.3.8",
+    "expand-vertex-data": "^1.1.2",
+    "gl-mat4": "^1.1.4",
+    "gl-vec3": "^1.0.3",
+    "wavefront-obj-parser": "^2.0.0",
+    "ws": "^3.1.0"
+  }
+}
