@@ -4,6 +4,7 @@ An experiment in hot reloading non-skinned models from Blender to a WebGL Scene
 
 [Read the Blog Post](http://chinedufn.com/blender-web-hot-reload-obj/)
 
+![Monkey hot reload](monkey-hot-reload.gif)
 
 To run locally
 
