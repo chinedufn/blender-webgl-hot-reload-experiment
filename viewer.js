@@ -1,12 +1,13 @@
 var glMat4 = require('gl-mat4')
-var glVec3 = require('gl-vec3')
 var expandVertexData = require('expand-vertex-data')
 
+// Create a canvas to draw onto and add it into the page
 var canvas = document.createElement('canvas')
 canvas.width = 600
 canvas.height = 600
 document.body.append(canvas)
 
+// Add click controls to the canvas so that you can click and drag to move the camera
 var isDragging = false
 var xCameraRot = Math.PI / 3
 var yCameraRot = 0
@@ -33,10 +34,12 @@ canvas.onmouseup = function () {
   isDragging = false
 }
 
+// Get a handle for WebGL context
 var gl = canvas.getContext('webgl')
 gl.clearColor(0.0, 0.0, 0.0, 1.0)
 gl.enable(gl.DEPTH_TEST)
 
+// Create a simple vertex shader to render our geometry
 var vertexGLSL = `
 attribute vec3 aVertexPos;
 attribute vec3 aVertexNormal;
@@ -55,6 +58,7 @@ void main (void) {
 }
 `
 
+// Create a simple fragment shader with some lighting
 var fragmentGLSL = `
 precision mediump float;
 
@@ -65,27 +69,26 @@ varying vec3 vNormal;
 varying vec3 vWorldSpacePos;
 
 void main (void) {
-  float ambientStrength = 0.1;
-  vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0);
+  vec3 ambient = vec3(0.24725, 0.1995, 0.0745);
 
-  vec3 lightColor = vec3(1.0, 0.0, 0.0);
+  vec3 lightColor = vec3(1.0, 1.0, 1.0);
 
   vec3 normal = normalize(vNormal);
   vec3 lightDir = normalize(uLightPos - vWorldSpacePos);
   float diff = max(dot(normal, lightDir), 0.0);
-  vec3 diffuse = diff * vec3(0.5, 0.2, 0.3);
-  diffuse = diff * lightColor;
+  vec3 diffuse = diff * vec3(0.75164, 0.60648, 0.22648);
 
-  float specularStrength = 0.5;
+  float shininess = 0.4;
   vec3 viewDir = normalize(uCameraPos - vWorldSpacePos);
   vec3 reflectDir = reflect(-lightDir, normal);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-  vec3 specular = specularStrength * spec * lightColor;
+  vec3 specular = shininess * spec * vec3(0.628281, 0.555802, 0.366065);
 
   gl_FragColor = vec4(ambient + diffuse + specular, 1.0);
 }
 `
 
+// Link our shader program
 var vertexShader = gl.createShader(gl.VERTEX_SHADER)
 gl.shaderSource(vertexShader, vertexGLSL)
 gl.compileShader(vertexShader)
@@ -107,28 +110,24 @@ gl.enableVertexAttribArray(vertexPosAttrib)
 var vertexNormalAttrib = gl.getAttribLocation(shaderProgram, 'aVertexNormal')
 gl.enableVertexAttribArray(vertexNormalAttrib)
 
+// Create the buffers that will hold our vertex data when it loads
 var vertexPosBuffer = gl.createBuffer()
 var vertexNormalBuffer = gl.createBuffer()
-
-gl.bindBuffer(gl.ARRAY_BUFFER, vertexPosBuffer)
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([]), gl.STATIC_DRAW)
-gl.vertexAttribPointer(vertexPosAttrib, 3, gl.FLOAT, false, 0, 0)
-
-gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer)
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([]), gl.STATIC_DRAW)
-gl.vertexAttribPointer(vertexNormalAttrib, 3, gl.FLOAT, false, 0, 0)
-
 var vertexIndexBuffer = gl.createBuffer()
-gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexIndexBuffer)
-gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([]), gl.STATIC_DRAW)
 
+// Get handles to our shader uniforms
 var mVMatrixUni = gl.getUniformLocation(shaderProgram, 'uMVMatrix')
 var pMatrixUni = gl.getUniformLocation(shaderProgram, 'uPMatrix')
 var lightPosUni = gl.getUniformLocation(shaderProgram, 'uLightPos')
 var cameraPosUni = gl.getUniformLocation(shaderProgram, 'uCameraPos')
 
+// Set up our perspective matrix
 gl.uniformMatrix4fv(pMatrixUni, false, glMat4.perspective([], Math.PI / 3, 1, 0.1, 100))
 
+// Open up a websocket connection to our hot reload server.
+// Whenever our server sends us new vertex data we'll update our GPU buffers with the new data.
+// Then, next time we draw, this new vertex data will be used. This is the essence of hot-reloading
+// our 3D models
 var ws = new window.WebSocket('ws://127.0.0.1:8989')
 ws.onmessage = function (message) {
   var vertexData = JSON.parse(message.data)
@@ -145,6 +144,7 @@ ws.onmessage = function (message) {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexIndexBuffer)
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexData.positionIndices), gl.STATIC_DRAW)
 
+  // Keep track of how many indices we need to draw when we call drawElements
   numIndicesToDraw = vertexData.positionIndices.length
 }
 
@@ -152,6 +152,7 @@ var numIndicesToDraw
 function draw () {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+  // Create our camera based on how much the user has dragged the canvas
   var camera = glMat4.create()
   var xCameraMatrix = glMat4.create()
   var yCameraMatrix = glMat4.create()
@@ -161,15 +162,18 @@ function draw () {
   glMat4.multiply(camera, xCameraMatrix, camera)
   glMat4.multiply(camera, yCameraMatrix, camera)
 
+  // We use the camera position uniform to calculate our specular lighting
   gl.uniform3fv(cameraPosUni, [camera[12], camera[13], camera[14]])
 
   camera = glMat4.lookAt([], [camera[12], camera[13], camera[14]], [0, 0, 0], [0, 1, 0])
   gl.uniformMatrix4fv(mVMatrixUni, false, camera)
 
-  var worldSpaceLightPos = [0, 5, 0]
+  var worldSpaceLightPos = [-2, 5, 2]
   gl.uniform3fv(lightPosUni, worldSpaceLightPos)
 
-  gl.drawElements(gl.TRIANGLES, numIndicesToDraw, gl.UNSIGNED_SHORT, 0)
+  if (numIndicesToDraw) {
+    gl.drawElements(gl.TRIANGLES, numIndicesToDraw, gl.UNSIGNED_SHORT, 0)
+  }
 
   window.requestAnimationFrame(draw)
 }

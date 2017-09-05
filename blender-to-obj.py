@@ -14,6 +14,7 @@ bpy.ops.export_scene.obj(
     use_materials=False,
     use_triangles=True,
     use_edges=True,
+    use_normals=True,
     use_mesh_modifiers=True,
     use_blen_objects=True
 )
