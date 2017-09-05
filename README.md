@@ -14,4 +14,4 @@ npm install
 npm start
 ```
 
-Whener you save `model.blend` in Blender your browser should update with the new model
+Whenever you save `model.blend` in Blender your browser should update with the new model
