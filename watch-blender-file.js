@@ -13,10 +13,13 @@ chokidar.watch('./*.blend', {})
   var wavefrontPath = modelName + '.obj'
   var jsonPath = modelName + '.json'
 
-  var pathToBlenderExecutable = '/Applications/blender.app/Contents/MacOS/blender'
   // Use the blender CLI to export our .blend model as OBJ
   cp.exec(
-    `${pathToBlenderExecutable} ${blenderFilePath} --background --python blender-to-obj.py -- ${wavefrontPath}`,
+    // Make sure that `blender` is in your PATH.
+    // On mac you can try adding the following to your ~/.bash_profile:
+    //  # Blender CLI
+    //  export PATH="$PATH:/Applications/blender.app/Contents/MacOS"
+    `blender ${blenderFilePath} --background --python blender-to-obj.py -- ${wavefrontPath}`,
     function (err, stdout, stderr) {
       if (err) {
         return console.error(`exec error: ${err}`)
