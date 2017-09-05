@@ -4,6 +4,9 @@
   "description": "An experiment in hot reloading OBJ models from Blender",
   "main": "watch-blender-file.js",
   "scripts": {
+    "start:server": "node watch-blender-file.js",
+    "start:client": "budo viewer.js --open --live",
+    "start": "lil-pids services",
     "test": "standard"
   },
   "repository": {
@@ -26,6 +29,8 @@
   },
   "homepage": "https://github.com/chinedufn/blender-webgl-hot-reload-experiment#readme",
   "devDependencies": {
+    "budo": "^10.0.4",
+    "lil-pids": "^2.6.0",
     "standard": "^10.0.3"
   },
   "dependencies": {
